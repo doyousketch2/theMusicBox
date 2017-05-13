@@ -7,6 +7,7 @@ Used the Denver custom waveform generator to create it.
 https://github.com/superzazu/denver.lua  
 No need to download, it's included.  
 
-**Tap the squares to toggle notes on/off**
+**Instructions:**  
+> Tap the squares to toggle notes on/off  
 
 It was fun for an hour of coding.
