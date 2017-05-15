@@ -55,7 +55,6 @@ function lo .load()
 -- postprocessing effects
   chroma = shine .separate_chroma()
   sketch = shine .sketch()
-  sketch .amp = 0
 
 -- populate empty grid
   for y = 1,  rows do
