@@ -37,9 +37,12 @@ grid = {}
 timer = 0
 tempo = 2
 currentCol = 0
+amplitude = 0
 lastpos = nil
+
 font = lg .newFont( 22 )
 denver  = require 'libs.denver'  -- waveform gen
+shine = require 'libs.shine'   -- postprocessing effects
 freq = { 'D#5', 'D5', 'C#5', 'C5',
          'B4', 'A#4', 'A4', 'G#4',
          'G4', 'F#4', 'F4', 'E4',
@@ -48,6 +51,11 @@ freq = { 'D#5', 'D5', 'C#5', 'C5',
 
 function lo .load()
   print('Löve App begin')
+
+-- postprocessing effects
+  chroma = shine .separate_chroma()
+  sketch = shine .sketch()
+  sketch .amp = 0
 
 -- populate empty grid
   for y = 1,  rows do
@@ -99,29 +107,49 @@ function lo .update(dt)
   end -- lmo or #lto
 
   timer = timer + dt * tempo
-  currentCol = math .floor(timer % cols)
+  currentCol = math .floor( timer % cols )
+
+  chroma .angle = math .sin( timer )
+  chroma .radius = chroma .radius - dt
+  if chroma .radius < 0 then
+    chroma .radius = 0
+  end
+
+  -- you can set sketch.amp, but it doesn't return a value
+  -- so I'm using the 'amplitude' variable to keep track of it
+  amplitude = amplitude - dt / 20
+  if amplitude < 0 then
+    amplitude = 0
+  end
+  sketch .amp = amplitude
 end -- lo .update(dt)
 
 --~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 function lo .draw()
-  for yy = 0,  rows -1 do
-    for xx = 0,  cols -1 do
-      lg .setColor(255,  255,  255)
-      if currentCol == xx then
-        lg .setColor(255,  0,  0)
-      end
-      if grid[xx + yy * cols] == true then
-        lg .rectangle( 'fill',  gx * xx,  gy * yy,  gx,  gy )
-        if currentCol == xx then
-          local note  = denver .get({ waveform = 'square',  frequency = freq[yy + 1],  length = .1 })
-          la .play(note)
+  chroma(function()
+    sketch(function()
+      for yy = 0,  rows -1 do
+        for xx = 0,  cols -1 do
+          lg .setColor(255,  255,  255)
+          if currentCol == xx then
+            lg .setColor(255,  0,  0)
+          end
+          if grid[xx + yy * cols] == true then
+            lg .rectangle( 'fill',  gx * xx,  gy * yy,  gx,  gy )
+            if currentCol == xx then
+              local note  = denver .get({ waveform = 'square',  frequency = freq[yy + 1],  length = .1 })
+              la .play(note)
+              chroma .radius = 3
+              amplitude = lm .random(2,  6) / 1000
+            end
+          else
+            lg .rectangle( 'line',  gx * xx,  gy * yy,  gx,  gy )
+          end  -- grid
         end
-      else
-        lg .rectangle( 'line',  gx * xx,  gy * yy,  gx,  gy )
-      end  -- grid
-    end
-  end
+      end
+    end) -- sketch
+  end) -- separate_chroma
 end  -- lo .draw
 
 --~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
